@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trofeo 3D</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script type="module" >
+        import * as THREE from './three.module.js';
+        import { OrbitControls } from './orbitcontrols.js';
+       </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.145.0/three.js"></script>
+    <script>
+        // Configuración de la escena, cámara y renderizador
+        const scene = new THREE.Scene();
+        scene.background = new THREE.CubeTextureLoader()
+                .setPath("textures/")
+                .load( [
+				 'px.jpg','nx.jpg','py.jpg','ny.jpg','pz.jpg','nz.jpg'
+			] );
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // Habilitar sombras en el renderizador
+        document.body.appendChild(renderer.domElement);
+
+            
+// --------------------------------------------------------------------------------------------------------------
+
+        // FIG 0 - SOLIDO DE REVOLUCION
+        const points = [];
+        for ( let i = 1; i < 8; i ++ ) {
+        points.push( new THREE.Vector2( Math.sin( i * 0.2 ) * (1.15 + i * 0.1), i * 0.5 ) );
+        }
+        const geometrySolid = new THREE.LatheGeometry( points );
+        const materialSolid = new THREE.MeshStandardMaterial( { color: 0xBE9A5C, side: THREE.BackSide,  } );
+        const lathe = new THREE.Mesh( geometrySolid, materialSolid );
+        lathe.castShadow = true;
+        lathe.receiveShadow = true;
+        lathe.position.set(0,4.9,0);
+        scene.add( lathe );
+
+        // FIG 13 - HIPERBOLOIDE DE UNA HOJA
+        const segments = 100;
+
+        const a = 2; 
+        const b = 2; 
+
+        // SUPERIOR
+        const pointsUpper = [];
+        for (let i = 0; i <= segments; i++) {
+          const theta = (i / segments) * Math.PI;
+          const x = a * Math.sinh(theta);
+          const y = 0;
+          const z = b * Math.cosh(theta);
+          pointsUpper.push(new THREE.Vector3(x, y, z));
+        }
+
+        // INFERIOR
+        const pointsLower = [];
+        for (let i = 0; i <= segments; i++) {
+           const theta = (i / segments) * Math.PI;
+           const x = -a * Math.sinh(theta);
+           const y = 0;
+           const z = -b * Math.cosh(theta);
+           pointsLower.push(new THREE.Vector3(x, y, z));
+        }
+
+        // UNIR
+        const points0 = pointsUpper.concat(pointsLower.reverse());
+
+        // GEOMETRIA
+        const geometrySolid0 = new THREE.LatheGeometry(points);
+        const materialSolid0 = new THREE.MeshStandardMaterial({ color: 0xBE9A5C, side: THREE.FrontSide, reflectivity: 100,
+        shininess:90 });
+        const lathe0 = new THREE.Mesh(geometrySolid0, materialSolid0);
+        lathe0.castShadow = true;
+        lathe0.receiveShadow = true;
+        lathe0.position.set(0,2.2,0);
+        lathe0.scale.set(0.5,1,0.4);
+        scene.add(lathe0);
+
+        // FIG 1 - BASE
+        const cuerpoGeometry = new THREE.CylinderGeometry(1.7, 2.2, 2, 32);
+        const cuerpoMaterial = new THREE.MeshStandardMaterial({ color: 0x17140F });
+        const cuerpo = new THREE.Mesh(cuerpoGeometry, cuerpoMaterial);
+        cuerpo.castShadow = true;
+        cuerpo.receiveShadow = true;
+        scene.add(cuerpo);
+        cuerpo.position.set(0, 1, 0);
+
+        // FIG 2 - CUERPO BASE
+        const baseGeometry = new THREE.CylinderGeometry(2.5, 2.6, 0.3, 32);
+        const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x17140F });
+        const base = new THREE.Mesh(baseGeometry, baseMaterial);
+        base.castShadow = true; // Permitir que el objeto proyecte sombras
+        base.receiveShadow = true; // Permitir que el objeto reciba sombras
+        scene.add(base);
+        base.position.set(0, 0, 0);
+
+        // FIG 3 - ARO INFERIOR
+        const aroGeometry = new THREE.TorusGeometry(1.8, 0.12, 17, 100,);
+        const aroMaterial = new THREE.MeshPhongMaterial({ color: 0x322C21, reflectivity: 100,
+        shininess:90 });
+        const aro = new THREE.Mesh(aroGeometry, aroMaterial);
+        aro.rotation.x = Math.PI / 2;
+        aro.castShadow = true;
+        aro.receiveShadow = true;
+        aro.position.set(0, 2, 0);
+        scene.add(aro);
+
+        // FIG 4 - ARO SUPERIOR
+        const aro2Geometry = new THREE.TorusGeometry(2.2, 0.16, 17, 100);
+        const aro2Material = new THREE.MeshPhongMaterial({ color: 0x322C21, reflectivity: 100,
+        shininess:90 });
+        const aro2 = new THREE.Mesh(aro2Geometry, aro2Material);
+        aro2.rotation.x = Math.PI / 2;
+        aro2.castShadow = true;
+        aro2.receiveShadow = true;
+        aro2.position.set(0, 0.2, 0);
+        scene.add(aro2);
+
+        // FIG 5 - OREJA
+        const geometry = new THREE.TorusGeometry(0.83, 0.25, 20, 100, Math.PI); // Usamos Math.PI para limitar a la mitad
+        const material = new THREE.MeshPhongMaterial({ color: 0xBE9A5C, reflectivity: 100,
+        shininess:90 });
+        const torus = new THREE.Mesh(geometry, material);
+        torus.rotation.z = Math.PI / 2;
+        torus.castShadow = true;
+        torus.receiveShadow = true;
+        torus.position.set(-1.9, 6.9, -0.06);
+        scene.add(torus);
+
+        // FIG 5 - OREJA
+        const geometry2 = new THREE.TorusGeometry(0.78, 0.28, 20, 100, Math.PI); // Usamos Math.PI para limitar a la mitad
+        const material2 = new THREE.MeshPhongMaterial({ color: 0xBE9A5C, reflectivity: 100,
+        shininess:90 });
+        const torus2 = new THREE.Mesh(geometry2, material2);
+        torus2.rotation.z = Math.PI / -2;
+        torus2.castShadow = true;
+        torus2.receiveShadow = true;
+        torus2.position.set(1.9, 6.9, -0.05);
+        scene.add(torus2);
+
+        // FIG 6 - COPA EXT
+        const cylinderGeometry = new THREE.CylinderGeometry(2, 2, 3, 32, 1, true);
+        const textureCylinder = new THREE.TextureLoader().load("textures/PISTON.jpg");
+        const normalMapCylinder = new THREE.TextureLoader().load("textures/normalMapPiston.png");
+        const cylinderMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, 
+        map: textureCylinder, normalMap: normalMapCylinder, 
+        reflectivity: 100,
+        shininess:90
+        });
+        const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+        cylinder.position.set(0, 6.9, 0);
+        cylinder.castShadow = true;
+        cylinder.receiveShadow = true;
+        scene.add(cylinder);
+
+
+        // FIG 6 - COPA INT
+        const cylinder2Geometry = new THREE.CylinderGeometry(1.8, 1.8, 3, 32, 1, true); 
+        const cylinder2Material = new THREE.MeshPhongMaterial({color: 0xBE9A5C, 
+        side: THREE.BackSide, reflectivity: 100,
+        shininess:90});
+        const cylinder2 = new THREE.Mesh(cylinder2Geometry, cylinder2Material);
+        scene.add(cylinder2);
+        cylinder2.position.set(0, 6.9, 0);
+        cylinder2.castShadow = true;
+        cylinder2.receiveShadow = true;
+        
+        // FIG 7 - BORDE COPA SUPERIOR
+        const tapaGeometry = new THREE.RingGeometry( 1.8, 2, 32, 1, 2, Math.PI * 2 ); 
+        const tapaMaterial = new THREE.MeshPhongMaterial( { color: 0xBE9A5C, reflectivity: 100,
+        shininess:90 } );
+        const tapa1 = new THREE.Mesh( tapaGeometry, tapaMaterial ); 
+        tapa1.rotation.x = Math.PI / -2;
+        tapa1.position.set(0, 8.4, 0)
+        tapa1.castShadow = true;
+        tapa1.receiveShadow = true;
+        scene.add( tapa1 );
+
+        // FIG 7 - TAPA COPA INFERIOR
+        const tapa2Geometry = new THREE.RingGeometry( 0, 2, 32, 1, 2, Math.PI * 2 ); 
+        const tapa2Material = new THREE.MeshPhongMaterial( { color: 0xBE9A5C } );
+        const tapa2 = new THREE.Mesh( tapa2Geometry, tapa2Material ); 
+        tapa2.rotation.x = Math.PI / 2;
+        tapa2.position.set(0, 5.4, 0)
+        tapa2.castShadow = true;
+        tapa2.receiveShadow = true;
+        scene.add( tapa2 );
+        
+        // FIG 9 - BARRAS OREJA 1
+        const capsulaGeometry = new THREE.CapsuleGeometry( 0.3, 2.5, 10, 10 ); 
+        const capsula2Geometry = new THREE.CapsuleGeometry( 0.3, 1.5, 10, 10 ); 
+        const capsula3Geometry = new THREE.CapsuleGeometry( 0.3, 1.2, 10, 10 ); 
+        const capsulaMaterial = new THREE.MeshStandardMaterial( {color: 0xBE9A5C, reflectivity: 100,
+        shininess:90} ); 
+        const capsula = new THREE.Mesh( capsulaGeometry, capsulaMaterial ); 
+        const capsula2 = new THREE.Mesh( capsula2Geometry, capsulaMaterial ); 
+        const capsula3 = new THREE.Mesh( capsula3Geometry, capsulaMaterial ); 
+        capsula.rotation.z = Math.PI / 2;
+        capsula2.rotation.z = Math.PI / 2;
+        capsula3.rotation.z = Math.PI / 2;
+        capsula.castShadow = true;
+        capsula.receiveShadow = true;
+        capsula.position.set(3.4, 7.7, 0);
+        capsula2.position.set(3.57, 7.09, 0);
+        capsula3.position.set(3.45, 6.47, 0);
+        scene.add( capsula, capsula2, capsula3 );
+        capsula.castShadow = true;
+        capsula.receiveShadow = true;
+        capsula2.castShadow = true;
+        capsula2.receiveShadow = true;
+        capsula3.castShadow = true;
+        capsula3.receiveShadow = true;
+
+        // FIG 9 - BARRAS OREJA 1
+        const capsula0 = new THREE.Mesh( capsulaGeometry, capsulaMaterial ); 
+        const capsula20 = new THREE.Mesh( capsula2Geometry, capsulaMaterial ); 
+        const capsula30 = new THREE.Mesh( capsula3Geometry, capsulaMaterial ); 
+        capsula0.rotation.z = Math.PI / 2;
+        capsula20.rotation.z = Math.PI / 2;
+        capsula30.rotation.z = Math.PI / 2;
+        capsula0.position.set(-3.48, 7.7, 0);
+        capsula20.position.set(-3.57, 7.09, 0);
+        capsula30.position.set(-3.45, 6.47, 0);
+        scene.add( capsula0, capsula20, capsula30 );
+        capsula0.castShadow = true;
+        capsula0.receiveShadow = true;
+        capsula20.castShadow = true;
+        capsula20.receiveShadow = true;
+        capsula30.castShadow = true;
+        capsula30.receiveShadow = true;
+
+        // FIG 10 - ARO PISTON
+        const apGeometry = new THREE.TorusGeometry(1, 0.35, 10, 100, Math.PI); 
+        const apMaterial = new THREE.MeshStandardMaterial({ color: 0x322C21 });
+        const ap = new THREE.Mesh(apGeometry, apMaterial);
+        ap.castShadow = true;
+        ap.receiveShadow = true;
+        ap.position.set(0, 2, 0);
+        scene.add(ap);
+
+
+        // FIG 10 - ARO PISTON
+        const ap2Geometry = new THREE.TorusGeometry(1.2, 0.38, 10, 100, Math.PI); 
+        const ap2Material = new THREE.MeshPhongMaterial({ color: 0xBE9A5C, reflectivity: 100,
+        shininess:90 });
+        const ap2 = new THREE.Mesh(ap2Geometry, ap2Material);
+        ap2.castShadow = true;
+        ap2.receiveShadow = true;
+        ap2.position.set(0, 2, 0);
+        scene.add(ap2);
+
+
+        // FIG 11 - PISTON
+        const pistonGeometry = new THREE.CylinderGeometry(0.5, 0.3, 2, 32);
+        const pistonMaterial = new THREE.MeshPhongMaterial({ color: 0xBE9A5C, reflectivity: 100,
+        shininess:90 });
+        const piston = new THREE.Mesh(pistonGeometry, pistonMaterial);
+        piston.castShadow = true;
+        piston.receiveShadow = true;
+        scene.add(piston);
+        piston.position.set(1.25, 2, 0);
+
+        // FIG 12 - PISTON 2
+        const piston2Geometry = new THREE.CylinderGeometry(0.5, 0.3, 2, 32);
+        const piston2Material = new THREE.MeshPhongMaterial({ color: 0xBE9A5C, reflectivity: 100,
+        shininess:90 });
+        const piston2 = new THREE.Mesh(piston2Geometry, piston2Material);
+        piston2.castShadow = true;
+        piston2.receiveShadow = true;
+        scene.add(piston2);
+        piston2.position.set(-1.25, 2, 0);
+
+        // FIG 13 - PISTON 3
+        //const piston3Geometry = new THREE.CylinderGeometry(0.1, 0.4, 2, 32);
+        //const piston3Material = new THREE.MeshStandardMaterial({ color: 0xBE9A5C });
+        //const piston3 = new THREE.Mesh(piston3Geometry, piston3Material);
+        //piston3.castShadow = true;
+        //piston3.receiveShadow = true;
+        //scene.add(piston3);
+        //piston3.position.set(0, 4.3, 0);
+        //piston3.scale.set(2, 1, 1);
+
+        // FIG 14 - PISTON 4
+        const piston4Geometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 32);
+        const piston4Material = new THREE.MeshStandardMaterial({ color: 0x322C21 });
+        const piston4 = new THREE.Mesh(piston4Geometry, piston4Material);
+        piston4.castShadow = true;
+        piston4.receiveShadow = true;
+        scene.add(piston4);
+        piston4.position.set(1.35, 2.65, 0);
+
+        // FIG 15 - PISTON 5
+        const piston5Geometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 32);
+        const piston5Material = new THREE.MeshStandardMaterial({ color: 0x322C21 });
+        const piston5 = new THREE.Mesh(piston5Geometry, piston5Material);
+        piston5.castShadow = true;
+        piston5.receiveShadow = true;
+        scene.add(piston5);
+        piston5.position.set(-1.35, 2.65, 0);
+    
+// ---------------------------------------------------------------------------------------------------------------
+
+        // Agregar un spotlight a la escena
+        const spotLight = new THREE.SpotLight(0xEDEACB, 1.2, 1000);
+        spotLight.position.set(0, 15, -13);
+        spotLight.angle = Math.PI / 6;
+        spotLight.penumbra = 0.05;
+        spotLight.decay = 3;
+        spotLight.distance = 400;
+        spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 1024; // Resolución de la sombra
+        spotLight.shadow.mapSize.height = 1024;
+        spotLight.shadow.camera.near = 0.5;
+        spotLight.shadow.camera.far = 500;
+        scene.add(spotLight);
+
+
+        // Agregar una luz ambiental a la escena
+        const ambientLight = new THREE.AmbientLight(0x706F62); // Luz de color gris oscuro
+        scene.add(ambientLight);
+
+        // Configuración de la cámara
+        camera.position.z = 0;
+        camera.position.y = 9;
+        camera.position.x = 0;
+
+        // Animación de la cámara
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotar la cámara alrededor del origen en el eje Y
+            const radius = 10;
+            const angle = Date.now() * 0.001; // Velocidad de la rotación
+            camera.position.x = Math.cos(angle) * radius;
+            camera.position.z = Math.sin(angle) * radius;
+            camera.lookAt(0, 4.5, 0);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        
+    </script>
+</body>
+</html>
